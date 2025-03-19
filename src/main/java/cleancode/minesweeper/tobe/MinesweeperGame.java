@@ -26,20 +26,27 @@ public class MinesweeperGame {
         showGameStartComents();
         initializeGame();
         while (true) {
-            showBoard();
-
-            if (doesUserWinTheGame()) {
-                System.out.println("지뢰를 모두 찾았습니다. GAME CLEAR!");
-                break;
+            try {
+                showBoard();
+    
+                if (doesUserWinTheGame()) {
+                    System.out.println("지뢰를 모두 찾았습니다. GAME CLEAR!");
+                    break;
+                }
+                if (doesUserLoseTheGame()) {
+                    System.out.println("지뢰를 밟았습니다. GAME OVER!");
+                    break;
+                }
+    
+                String cellInput = getCellInputFromUser();
+                String userActionInput = getUserActionInputFromUser();
+                actOnCell(cellInput, userActionInput);
+            } catch (AppException e) {
+                System.out.println(e.getMessage());
+            } catch (Exception e) {
+                System.out.println("알 수 없는 오류가 발생했습니다.");
+                e.printStackTrace();
             }
-            if (doesUserLoseTheGame()) {
-                System.out.println("지뢰를 밟았습니다. GAME OVER!");
-                break;
-            }
-
-            String cellInput = getCellInputFromUser();
-            String userActionInput = getUserActionInputFromUser();
-            actOnCell(cellInput, userActionInput);
         }
     }
 
@@ -62,7 +69,8 @@ public class MinesweeperGame {
             checkIfGameIsOver();
             return;
         } 
-        System.out.println("잘못된 번호를 선택하셨습니다.");
+        // System.out.println("잘못된 번호를 선택하셨습니다.");
+        throw new AppException("잘못된 번호를 선택하셨습니다.");
     }
 
     private static void changeGameStatusToLose() {
@@ -203,12 +211,16 @@ public class MinesweeperGame {
             case 'j':
                 return 9;
             default:
-                return -1;
+                throw new AppException("잘못된 입력입니다.");
         }
     }
 
     private static int convertRowFrom(char cellInputRow) {
-        return Character.getNumericValue(cellInputRow) - 1;
+        int rowIndex = Character.getNumericValue(cellInputRow) - 1;
+        if (rowIndex >= BOARD_ROW_SIZE) {
+            throw new AppException("잘못된 입력입니다.");
+        }
+        return rowIndex;
     }
 
     private static void checkIfGameIsOver() {
@@ -226,7 +238,7 @@ public class MinesweeperGame {
     private static boolean isAllCellOpened() {
       return Arrays.stream(BOARD) // Stream<String[]>
             .flatMap(Arrays::stream) // Stream<String>
-            .noneMatch(cell -> cell.equals(CLOSED_CELL_SIGN));
+            .noneMatch(CLOSED_CELL_SIGN::equals);
     }
 
     private static void open(int row, int col) {
